@@ -34,9 +34,10 @@ def test_cifar_convnet_error(device_id):
     force_deterministic_algorithms()
 
     reader_train = create_reader(os.path.join(base_path, 'train_map.txt'), os.path.join(base_path, 'CIFAR-10_mean.xml'), False)
-    reader_test  = create_reader(os.path.join(base_path, 'test_map.txt'), os.path.join(base_path, 'CIFAR-10_mean.xml'), False)
     model = create_convnet_cifar10_model(num_classes=10)
-    train_loss, metric = train_model(reader_train, reader_test, model, epoch_size=128, max_epochs=5)
+    model.update_signature((num_channels, image_height, image_width))
+    criterion = create_criterion_function(model, normalize=lambda x: x / 256)
+    train_loss, metric = train_model(reader_train, model, criterion, epoch_size=128, max_epochs=5)
 
     expected_loss_metric = (2.2963, 0.9062)
     assert np.allclose((train_loss, metric), expected_loss_metric, atol=TOLERANCE_ABSOLUTE)

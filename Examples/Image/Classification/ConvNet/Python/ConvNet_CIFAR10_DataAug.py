@@ -104,15 +104,7 @@ def create_criterion_function(model, normalize=identity):
 # train action  #
 ########################
 
-def train_model(reader, reader_test, model, epoch_size=50000, max_epochs=80):
-
-    # declare the model's input dimension
-    # Training does not require this, but it is needed for deployment.
-    model.update_signature((num_channels, image_height, image_width))
-
-    # criterion function. This is what is being trained trained.
-    # Model gets "sandwiched" between normalization (not part of model proper) and criterion.
-    criterion = create_criterion_function(model, normalize=lambda x: x / 256)
+def train_model(reader, model, criterion, epoch_size=50000, max_epochs=80):
     #debughelpers.dump_function(criterion, 'criterion')
 
     #from cntk.logging.graph import plot
@@ -196,11 +188,17 @@ def evaluate(reader, model):
 if __name__=='__main__':
     # create model
     model = create_convnet_cifar10_model(num_classes=10)
+    # declare the model's input dimension
+    # Training does not require this, but it is needed for deployment.
+    model.update_signature((num_channels, image_height, image_width))
+
+    # criterion function. This is what is being trained trained.
+    # Model gets "sandwiched" between normalization (not part of model proper) and criterion.
+    criterion = create_criterion_function(model, normalize=lambda x: x / 256)
 
     # train
     reader      = create_reader(os.path.join(data_path, 'train_map.txt'), os.path.join(data_path, 'CIFAR-10_mean.xml'), True)
-    reader_test = create_reader(os.path.join(data_path, 'test_map.txt'),  os.path.join(data_path, 'CIFAR-10_mean.xml'), False)
-    train_model(reader, reader_test, model, max_epochs=80)
+    train_model(reader, model, criterion, max_epochs=80)
 
     # save and load (as an illustration)
     path = data_path + "/model.cmf"
